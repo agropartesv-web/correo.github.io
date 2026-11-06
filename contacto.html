@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contacto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e9eef5; --card:#ffffff; --ink:#14213d; --muted:#5b6780;
+  --line:#c9d3e3; --accent:#2f5bea; --accent-ink:#ffffff;
+  --ok:#0f7b4b; --err:#b3261e;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1626; --card:#16213a; --ink:#eaf0fb; --muted:#9aa7c2;
+    --line:#2b3a5c; --accent:#6f8dff; --accent-ink:#0e1626;
+    --ok:#4cd08f; --err:#ff8a80;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
+  display:flex; align-items:center; justify-content:center; padding:24px;
+  line-height:1.5;
+}
+main{
+  width:100%; max-width:560px; background:var(--card);
+  border:1px solid var(--line); border-radius:18px; padding:36px 32px;
+}
+h1{font-size:2.2rem; font-weight:800; letter-spacing:-.02em; margin:0 0 6px; line-height:1.1}
+p.lead{margin:0 0 28px; color:var(--muted)}
+label{display:block; font-weight:600; margin:0 0 6px; font-size:.95rem}
+.field{margin-bottom:18px}
+input,textarea{
+  width:100%; font:inherit; color:var(--ink); background:transparent;
+  border:1.5px solid var(--line); border-radius:10px; padding:12px 14px;
+}
+textarea{min-height:140px; resize:vertical}
+input:focus,textarea:focus,button:focus-visible{outline:3px solid var(--accent); outline-offset:2px; border-color:var(--accent)}
+button{
+  font:inherit; font-weight:600; cursor:pointer; width:100%;
+  background:var(--accent); color:var(--accent-ink);
+  border:0; border-radius:10px; padding:14px 18px;
+}
+button[disabled]{opacity:.6; cursor:wait}
+#estado{margin:16px 0 0; min-height:1.5em; font-weight:600}
+#estado.ok{color:var(--ok)}
+#estado.error{color:var(--err)}
+.oculto{position:absolute; left:-9999px}
+@media (max-width:480px){ main{padding:28px 20px} h1{font-size:1.8rem} }
+</style>
+</head>
+<body>
+<main>
+  <h1>Escríbeme</h1>
+  <p class="lead">Cuéntame en qué puedo ayudarte y te responderé por correo.</p>
+
+  <form id="formulario" novalidate>
+    <!-- 1) Pega aquí tu clave de Web3Forms -->
+    <input type="hidden" name="access_key" value="PEGA_AQUI_TU_ACCESS_KEY">
+    <input type="hidden" name="subject" value="Nuevo mensaje desde tu web">
+    <input type="hidden" name="from_name" value="Formulario de contacto">
+    <!-- Anti-spam: los bots lo rellenan, las personas no lo ven -->
+    <input type="checkbox" name="botcheck" class="oculto" tabindex="-1" autocomplete="off">
+
+    <div class="field">
+      <label for="nombre">Nombre</label>
+      <input id="nombre" name="name" type="text" autocomplete="name" required>
+    </div>
+    <div class="field">
+      <label for="correo">Tu correo</label>
+      <input id="correo" name="email" type="email" autocomplete="email" required>
+    </div>
+    <div class="field">
+      <label for="mensaje">Mensaje</label>
+      <textarea id="mensaje" name="message" required></textarea>
+    </div>
+
+    <button type="submit" id="boton">Enviar mensaje</button>
+    <p id="estado" role="status" aria-live="polite"></p>
+  </form>
+</main>
+
+<script>
+const form = document.getElementById("formulario");
+const boton = document.getElementById("boton");
+const estado = document.getElementById("estado");
+
+function mostrar(texto, tipo){
+  estado.textContent = texto;
+  estado.className = tipo || "";
+}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  if (form.access_key.value.startsWith("PEGA_AQUI")) {
+    mostrar("Falta la clave de Web3Forms en el archivo (access_key).", "error");
+    return;
+  }
+  if (!form.checkValidity()) {
+    mostrar("Completa tu nombre, un correo válido y el mensaje.", "error");
+    form.reportValidity();
+    return;
+  }
+
+  boton.disabled = true;
+  boton.textContent = "Enviando…";
+  mostrar("");
+
+  try {
+    const respuesta = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify(Object.fromEntries(new FormData(form)))
+    });
+    const datos = await respuesta.json();
+    if (respuesta.ok && datos.success) {
+      form.reset();
+      mostrar("Mensaje enviado. Te responderé pronto.", "ok");
+    } else {
+      mostrar("No se pudo enviar: " + (datos.message || "inténtalo de nuevo."), "error");
+    }
+  } catch (err) {
+    mostrar("No hay conexión. Revisa tu internet e inténtalo otra vez.", "error");
+  } finally {
+    boton.disabled = false;
+    boton.textContent = "Enviar mensaje";
+  }
+});
+</script>
+</body>
+</html>
