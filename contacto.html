@@ -61,10 +61,6 @@ button[disabled]{opacity:.6; cursor:wait}
   <p class="lead">Cuéntame en qué puedo ayudarte y te responderé por correo.</p>
 
   <form id="formulario" novalidate>
-    <!-- 1) Pega aquí tu clave de Web3Forms -->
-    <input type="hidden" name="access_key" value="PEGA_AQUI_TU_ACCESS_KEY">
-    <input type="hidden" name="subject" value="Nuevo mensaje desde tu web">
-    <input type="hidden" name="from_name" value="Formulario de contacto">
     <!-- Anti-spam: los bots lo rellenan, las personas no lo ven -->
     <input type="checkbox" name="botcheck" class="oculto" tabindex="-1" autocomplete="off">
 
@@ -90,6 +86,8 @@ button[disabled]{opacity:.6; cursor:wait}
 const form = document.getElementById("formulario");
 const boton = document.getElementById("boton");
 const estado = document.getElementById("estado");
+// Pega aquí la URL que te da Google al implementar el script (termina en /exec)
+const URL_SCRIPT = "PEGA_AQUI_LA_URL_DE_TU_SCRIPT";
 
 function mostrar(texto, tipo){
   estado.textContent = texto;
@@ -99,8 +97,8 @@ function mostrar(texto, tipo){
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  if (form.access_key.value.startsWith("PEGA_AQUI")) {
-    mostrar("Falta la clave de Web3Forms en el archivo (access_key).", "error");
+  if (URL_SCRIPT.startsWith("PEGA_AQUI")) {
+    mostrar("Falta pegar la URL del script de Google en el archivo (URL_SCRIPT).", "error");
     return;
   }
   if (!form.checkValidity()) {
@@ -114,10 +112,9 @@ form.addEventListener("submit", async (e) => {
   mostrar("");
 
   try {
-    const respuesta = await fetch("https://api.web3forms.com/submit", {
+    const respuesta = await fetch(URL_SCRIPT, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify(Object.fromEntries(new FormData(form)))
+      body: new URLSearchParams(new FormData(form))
     });
     const datos = await respuesta.json();
     if (respuesta.ok && datos.success) {
